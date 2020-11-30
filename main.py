@@ -3,28 +3,39 @@ import requests
 import json
 from PIL import ImageTk, Image
 
-queueurl = requests.get("https://2b2t.io/api/queue?last=true").text
-if queueurl[15] != "]":
-	queue = queueurl[13] + queueurl[14] + queueurl[15]
-else:
-	if queueurl[14] != "]":
-		queue = queueurl[13] + queueurl[14]
-	else:
-		queue = queueurl[13]
-
-prioqurl = requests.get("https://2b2t.io/api/prioqueue?last=true").text
-if prioqurl[14] != "]":
-	prioq = prioqurl[13] + prioqurl[14]
-else:
-	prioq = prioqurl[13]
 url = requests.get("https://api.mcsrvstat.us/2/2b2t.org").text
 y = json.loads(url)
-playersmax = y['players']['max']
-playersonline = y['players']['online']
-motd = y['motd']['clean']
 bad_chars = ['[', ']', '{', '}']
-motd = ''.join(i for i in motd if not i in bad_chars)
-motd = motd.replace('2T', ' 2T')
+
+def getQueue():
+    queueurl = requests.get("https://2b2t.io/api/queue?last=true")
+    data = queueurl.json()
+    queue = int(data[0][1])
+    return queue
+
+def getPrioQ():
+    pqueueurl = requests.get("https://2b2t.io/api/prioqueue?last=true")
+    data = pqueueurl.json()
+    pqueue = int(data[0][1])
+    return pqueue
+
+def getMotd():
+    global y
+    global bad_chars
+    motd = y['motd']['clean']
+    motd = ''.join(i for i in motd if not i in bad_chars)
+    motd = motd.replace('2T', ' 2T')
+    return motd
+
+def getOnline(tm):
+    global y
+    playersmax = y['players']['max']
+    playersonline = y['players']['online']
+    if tm == 1:
+        return playersonline
+    else:
+        return playersmax
+
 
 window = Tk()
 
@@ -34,16 +45,16 @@ window.title("2b2t utils")
 
 window.geometry('580x250')
 
-lblone = Label(window, text="2b2t queue: " + str(queue), font=("Arial Bold", 15))
+lblone = Label(window, text="2b2t queue: " + str(getQueue()), font=("Arial Bold", 15))
 lblone.grid(column=1, row=1)
 
-lbltwo = Label(window, text="| 2b2t prio queue: " + str(prioq), font=("Arial Bold", 15))
+lbltwo = Label(window, text="| 2b2t prio queue: " + str(getPrioQ()), font=("Arial Bold", 15))
 lbltwo.grid(column=2, row=1)
 
-lblthree = Label(window, text="| 2b2t online: " + str(playersonline) + "/" + str(playersmax), font=("Arial Bold", 15))
+lblthree = Label(window, text="| 2b2t online: " + str(getOnline(1)) + "/" + str(getOnline(0)), font=("Arial Bold", 15))
 lblthree.grid(column=3, row=1) 
 
-lblmotd = Label(window, text="2b2t motd: " + str(motd), font=("Roboto", 15))
+lblmotd = Label(window, text="2b2t motd: " + str(getMotd()), font=("Roboto", 15))
 lblmotd.place(x=0, y=25)
 
 def clicked():
